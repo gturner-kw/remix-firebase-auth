@@ -1,0 +1,43 @@
+{
+  "private": true,
+  "sideEffects": false,
+  "scripts": {
+    "build": "run-s build:*",
+    "build:css": "npm run generate:css -- --minify",
+    "build:remix": "remix build",
+    "dev": "run-p dev:*",
+    "dev:css": "npm run generate:css -- --watch",
+    "dev:remix": "remix dev",
+    "generate:css": "npx tailwindcss -i ./styles/tailwind.css -o ./app/tailwind.css",
+    "start": "remix-serve build"
+  },
+  "dependencies": {
+    "@headlessui/react": "^1.6.5",
+    "@remix-run/node": "^1.6.3",
+    "@remix-run/react": "^1.6.3",
+    "@remix-run/serve": "^1.6.3",
+    "csrf": "^3.1.0",
+    "firebase": "^9.8.4",
+    "firebase-admin": "^11.0.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-firebase-hooks": "^5.0.3",
+    "uid-safe": "^2.1.5"
+  },
+  "devDependencies": {
+    "@remix-run/dev": "^1.6.3",
+    "@remix-run/eslint-config": "^1.6.3",
+    "@types/react": "^17.0.45",
+    "@types/react-dom": "^17.0.17",
+    "@types/uid-safe": "^2.1.2",
+    "autoprefixer": "^10.4.7",
+    "concurrently": "^7.2.2",
+    "eslint": "^8.15.0",
+    "postcss": "^8.4.14",
+    "tailwindcss": "^3.1.4",
+    "typescript": "^4.6.4"
+  },
+  "engines": {
+    "node": ">=14"
+  }
+}
