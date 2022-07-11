@@ -22,8 +22,9 @@ export type User = {
   tenantId?: string | null;
 };
 
-function translate(users: UserRecord[]): User[] {
-  return users.map(({ uid, email, emailVerified, phoneNumber, disabled, displayName, tenantId }) => ({
+function translateUser(user: UserRecord): User {
+  const { uid, email, emailVerified, phoneNumber, disabled, displayName, tenantId } = user;
+  return {
     uid,
     email,
     emailVerified,
@@ -31,17 +32,26 @@ function translate(users: UserRecord[]): User[] {
     disabled,
     displayName,
     tenantId
-  }));
+  };
 }
 
 export async function getUsers(userIdentifier: UserIdentifier[]): Promise<User[]> {
   const result = await getAuth().getUsers(userIdentifier);
-  return translate(result.users);
+  return result.users.map(user => translateUser(user));
 }
 
 export async function listUsers(maxResults?: number, nextPageToken?: string): Promise<User[]> {
   const result = await getAuth().listUsers(maxResults, nextPageToken);
-  return translate(result.users);
+  return result.users.map(user => translateUser(user));
+}
+
+export async function getUserByEmail(email: string): Promise<User | null> {
+  try {
+    const result = await getAuth().getUserByEmail(email);
+    return translateUser(result);
+  } catch (err) {
+    return null;
+  }
 }
 
 export type AddUser = {
