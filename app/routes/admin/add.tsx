@@ -2,7 +2,7 @@ import { Form, useActionData, useTransition } from "@remix-run/react";
 import type { ActionFunction, LoaderFunction, MetaFunction } from "@remix-run/server-runtime";
 import { redirect } from "@remix-run/server-runtime";
 import { json } from "@remix-run/server-runtime";
-import { verifyUser } from "~/session.server";
+import { verifySessionContext } from "~/session.server";
 import { addUser } from "~/user-admin.server";
 
 export const meta: MetaFunction = () => ({
@@ -10,13 +10,13 @@ export const meta: MetaFunction = () => ({
 });
 
 export const loader: LoaderFunction = async ({ request }) => {
-  return verifyUser(request).then(async user => {
-    if (!user?.admin) {
+  return verifySessionContext(request).then(async session => {
+    if (!session?.user?.admin) {
       throw new Response("Unauthorized access", {
         status: 401
       });
     }
-    return user;
+    return session;
   });
 };
 

@@ -1,8 +1,10 @@
-import { useEffect, useContext, createContext } from "react";
+import { useEffect, useContext, createContext, useCallback, useState } from "react";
 import { clientAuth } from "../../session.client";
-import type { SessionContext } from "~/session-types";
+import type { SessionContext } from "~/shared/session/types";
+import { REFRESH_INTERVAL_SECS } from "~/shared/session/contants";
 import { useFetcher } from "@remix-run/react";
 import { useImmer } from "use-immer";
+import type { User as FirebaseUser } from "firebase/auth";
 
 export type Auth = {
   sessionContext: SessionContext | null;
@@ -20,7 +22,9 @@ export const useAuth = () => {
 
 export function AuthProvider({ sessionContext: parentSessionContext, children }: { sessionContext: SessionContext | null; children: React.ReactNode }) {
   const [sessionContext, setSessionContext] = useImmer<SessionContext | null>(parentSessionContext);
-  const active = !!sessionContext;
+  const { refreshToken, expires } = sessionContext?.state || {};
+  const active = !!sessionContext?.user;
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>();
   const [timing, setTiming] = useImmer<{ updated: number; refreshed?: number }>({ updated: Date.now() });
   const submitFetcher = useFetcher();
   const loadFetcher = useFetcher();
@@ -63,27 +67,35 @@ export function AuthProvider({ sessionContext: parentSessionContext, children }:
     }
   }, [timing, setTiming]);
 
-  // timer to refresh the token every 15 minutes
+  const submitRefresh = useCallback(async () => {
+    console.log("4. useCallback changed refreshToken=", refreshToken, "firebaseUser=", firebaseUser);
+    if (!refreshToken) {
+      return;
+    }
+    if (firebaseUser) {
+      // fetch token with force refresh flag
+      const idToken = await firebaseUser.getIdToken(true);
+      submit({ _method: "refresh", "refresh-token": refreshToken, "id-token": idToken }, { method: "post" });
+      console.log("4. refreshed token=", idToken);
+      setTiming(draft => {
+        draft.refreshed = Date.now();
+      });
+    }
+  }, [refreshToken, firebaseUser, setTiming, submit]);
+
+  // timer to refresh the token
   useEffect(() => {
-    console.log("4. useEffect changed with active=", active);
-    // TODO: perform an instant refresh here is session has expired
-    const handle = setInterval(async () => {
-      if (active) {
-        const currentUser = clientAuth.currentUser;
-        console.log("4. refreshing token - user=", currentUser);
-        if (currentUser) {
-          // fetch token with force refresh flag
-          const idToken = await currentUser.getIdToken(true);
-          submit({ _method: "refresh", "id-token": idToken }, { method: "post" });
-          console.log("4. refreshed token=", idToken);
-          setTiming(draft => {
-            draft.refreshed = Date.now();
-          });
-        }
-      }
-    }, (15 * 60 * 1000) / 60);
-    return () => clearInterval(handle);
-  }, [active, submit, setTiming]);
+    console.log("4. useEffect changed active=", active);
+    // refresh now if not active or will expire before first interval
+    if (!active || !expires || isExpired(expires - REFRESH_INTERVAL_SECS)) {
+      submitRefresh();
+    } else {
+      const handle = setInterval(() => {
+        submitRefresh();
+      }, REFRESH_INTERVAL_SECS * 1000);
+      return () => clearInterval(handle);
+    }
+  }, [active, expires, submitRefresh]);
 
   // listen for refresh storage event from other tabs
   useEffect(() => {
@@ -96,7 +108,16 @@ export function AuthProvider({ sessionContext: parentSessionContext, children }:
     };
   }, [load]);
 
-  // TODO: implement an auth listener to determine if the current user has been revoked
+  // on page reload, firebase lazy loads user, so let's listen for this action
+  useEffect(() => {
+    // TODO if auth state becomes null, this signals a user sign out
+    // we need to test if this needs to be handled specifically or if other mechanisms handle this correctly
+    clientAuth.onAuthStateChanged(user => setFirebaseUser(user));
+  }, []);
 
   return <AuthContext.Provider value={{ sessionContext }}>{children}</AuthContext.Provider>;
+}
+
+function isExpired(seconds: number) {
+  return Date.now() > seconds * 1000;
 }

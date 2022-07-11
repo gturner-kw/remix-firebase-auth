@@ -1,5 +1,8 @@
 import { createCookieSessionStorage, json } from "@remix-run/node";
 import uid from "uid-safe";
+import { XSRF_TIMEOUT_SECS } from "./shared/session/contants";
+
+const CONTEXT = "context";
 
 const cookieSecret = process.env.COOKIE_SECRET;
 if (!cookieSecret) {
@@ -12,7 +15,7 @@ const { getSession, commitSession, destroySession } = createCookieSessionStorage
   cookie: {
     name: xsrfTokenName,
     httpOnly: true,
-    maxAge: 3600, // 1 hour
+    maxAge: XSRF_TIMEOUT_SECS,
     path: "/login",
     sameSite: "strict",
     secrets: [cookieSecret],
@@ -30,10 +33,10 @@ export async function createSession(request: Request) {
     xsrfToken = uid.sync(18);
     console.log("creating new xsrfToken=", xsrfToken);
   }
-  session.set(xsrfTokenName, xsrfToken);
+  session.set(CONTEXT, xsrfToken);
   return json({ xsrfToken }, { headers: { "Set-Cookie": await commitSession(session) } });
 }
 
-export async function getCookieValue(request: Request) {
-  return (await getSession(request.headers.get("cookie"))).get(xsrfTokenName);
+export async function getXsrfToken(request: Request) {
+  return (await getSession(request.headers.get("cookie"))).get(CONTEXT);
 }

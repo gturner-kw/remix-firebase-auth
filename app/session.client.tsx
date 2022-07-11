@@ -5,5 +5,3 @@ import { getAuth } from "firebase/auth";
 const firebaseConfig = require("../firebaseConfig.json");
 
 export const clientAuth = getAuth(initializeApp(firebaseConfig));
-
-export function UserProvider({ children }: any) {}

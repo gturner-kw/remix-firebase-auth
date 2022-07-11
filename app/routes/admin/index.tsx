@@ -3,7 +3,7 @@ import type { LoaderFunction, MetaFunction } from "@remix-run/server-runtime";
 import { initializeApp } from "firebase/app";
 import type { AuthError } from "firebase/auth";
 import { getAuth, sendSignInLinkToEmail } from "firebase/auth";
-import { verifyUser } from "~/session.server";
+import { verifySessionContext } from "~/session.server";
 import type { User } from "~/user-admin.server";
 import { listUsers } from "~/user-admin.server";
 
@@ -17,8 +17,8 @@ export const meta: MetaFunction = () => ({
 });
 
 export const loader: LoaderFunction = async ({ request }) => {
-  return verifyUser(request).then(async user => {
-    if (!user?.admin) {
+  return verifySessionContext(request).then(async session => {
+    if (!session?.user?.admin) {
       throw new Response("Unauthorized access", {
         status: 401
       });

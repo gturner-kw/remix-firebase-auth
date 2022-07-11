@@ -1,7 +1,8 @@
 import type { ActionFunction, LinksFunction, LoaderFunction, MetaFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { Link, Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration, useCatch, useFetcher, useLoaderData } from "@remix-run/react";
-import { createUserSession, getSessionContext, logout } from "~/session.server";
+import type { UserSessionProperties } from "~/session.server";
+import { getSessionContext, logout, refreshUserSession } from "~/session.server";
 import { AuthProvider, useAuth } from "./shared/components/auth";
 import styles from "./tailwind.css";
 
@@ -29,20 +30,18 @@ export const action: ActionFunction = async ({ request }) => {
     return logout(request);
   }
   if (method === "refresh") {
-    const sessionContext = await getSessionContext(request);
-    if (!sessionContext) {
-      console.log("session expired - redirecting to login...");
-      return redirect("/login");
-    }
+    const refreshToken = form.get("refresh-token");
     const idToken = form.get("id-token");
-    if (typeof idToken !== "string") {
+    if (typeof refreshToken !== "string" || typeof idToken !== "string") {
       // unexpected, throw
       throw new Response("Invalid parameters", {
         status: 400
       });
     }
-    console.log("refresh idToken=", idToken);
-    return createUserSession(idToken, { admin: true });
+    // TODO: lookup user in db
+    const props: UserSessionProperties = { admin: true };
+    console.log("refresh refreshToken=", refreshToken, "idToken=", idToken);
+    return refreshUserSession(request, refreshToken, idToken, props);
   }
   throw new Response(`The _method ${method} is not supported`, { status: 400 });
 };
@@ -75,7 +74,8 @@ function Header({ boundary }: { boundary?: boolean }) {
 
 function HeaderAction() {
   const { sessionContext } = useAuth();
-  const { user, expires } = sessionContext || {};
+  const { user, state } = sessionContext || {};
+  const { expires } = state || {};
   const fetcher = useFetcher();
 
   const handleSubmit = (e: any) => {

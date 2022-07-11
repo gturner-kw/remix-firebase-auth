@@ -6,22 +6,24 @@ import type { AuthError } from "firebase/auth";
 import { EmailAuthProvider } from "firebase/auth";
 import { fetchSignInMethodsForEmail } from "firebase/auth";
 import { sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from "firebase/auth";
-import { createUserSession, getUser } from "~/session.server";
-import { createSession as createXsrfSession, getCookieValue } from "~/xsrf.server";
+import type { UserSessionProperties } from "~/session.server";
+import { createUserSession, getSessionContext } from "~/session.server";
+import { createSession as createXsrfSession, getXsrfToken } from "~/xsrf.server";
 import { clientAuth } from "~/session.client";
+import type { SessionContext } from "~/shared/session/types";
 
 export const meta: MetaFunction = () => ({
   title: "Log In",
   // refresh expired xsrf token
   refresh: {
     httpEquiv: "refresh",
-    content: "3601"
+    content: "3600"
   }
 });
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const user = await getUser(request);
-  if (user) {
+  const session: SessionContext | null = await getSessionContext(request);
+  if (session) {
     return redirect("/");
   }
   return createXsrfSession(request);
@@ -38,7 +40,7 @@ export const action: ActionFunction = async ({ request }) => {
     });
   }
 
-  const xsrfCookieValue = await getCookieValue(request);
+  const xsrfCookieValue = await getXsrfToken(request);
   if (!xsrfCookieValue) {
     console.log("xsrf cookie expired - reloading page...");
     return redirect("/login");
@@ -49,7 +51,9 @@ export const action: ActionFunction = async ({ request }) => {
       status: 401
     });
   }
-  return createUserSession(idToken, { admin: true }, "/");
+  // TODO: lookup user in db
+  const props: UserSessionProperties = { admin: true };
+  return createUserSession(idToken, props, "/");
 };
 
 export default function SignIn() {

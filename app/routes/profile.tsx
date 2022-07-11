@@ -1,7 +1,7 @@
 import type { ActionFunction, LoaderFunction, MetaFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
-import type { SessionContext } from "~/session-types";
-import { verifyUser } from "~/session.server";
+import type { SessionContext } from "~/shared/session/types";
+import { verifySessionContext } from "~/session.server";
 import { useAuth } from "~/shared/components/auth";
 
 export const meta: MetaFunction = () => ({
@@ -9,7 +9,7 @@ export const meta: MetaFunction = () => ({
 });
 
 export const loader: LoaderFunction = async ({ request }) => {
-  return verifyUser(request);
+  return verifySessionContext(request);
 };
 
 export const action: ActionFunction = async () => {
