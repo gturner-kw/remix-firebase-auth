@@ -1,17 +1,13 @@
-import { getAuth } from "~/user-admin.server";
+import { getAuth } from "~/utils/user-admin.server";
 import type { Session } from "@remix-run/node";
 import { createCookieSessionStorage, Headers, json, redirect } from "@remix-run/node";
-import type { SessionContext, User } from "./shared/session/types";
-import { SESSION_TIMEOUT_SECS, REFRESH_TIMEOUT_SEC } from "./shared/session/contants";
+import type { SessionContext, User } from "./types";
+import { SESSION_TIMEOUT_SECS, REFRESH_TIMEOUT_SEC } from "./contants";
 import uidSafe from "uid-safe";
 import type { DecodedIdToken } from "firebase-admin/lib/auth/token-verifier";
+import { COOKIE_SECRET } from "../constants.server";
 
 const CONTEXT = "context";
-
-const cookieSecret = process.env.COOKIE_SECRET;
-if (!cookieSecret) {
-  throw new Error("COOKIE_SECRET must be set");
-}
 
 /**
  * Session Storage
@@ -39,7 +35,7 @@ const {
     httpOnly: true,
     path: "/",
     sameSite: "lax", // allow our links from other sites to send us this cookie
-    secrets: [cookieSecret],
+    secrets: [COOKIE_SECRET],
     secure: process.env.NODE_ENV === "production"
   }
 });
@@ -70,7 +66,7 @@ const {
     httpOnly: true,
     path: "/",
     sameSite: "lax", // allow our links from other sites to send us this cookie
-    secrets: [cookieSecret],
+    secrets: [COOKIE_SECRET],
     secure: process.env.NODE_ENV === "production"
   }
 });

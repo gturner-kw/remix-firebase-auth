@@ -2,8 +2,8 @@ import { Form, useActionData, useTransition } from "@remix-run/react";
 import type { ActionFunction, LoaderFunction, MetaFunction } from "@remix-run/server-runtime";
 import { redirect } from "@remix-run/server-runtime";
 import { json } from "@remix-run/server-runtime";
-import { verifySessionContext } from "~/session.server";
-import { addUser } from "~/user-admin.server";
+import { verifySessionContext } from "~/utils/session/session.server";
+import { addUser } from "~/utils/user-admin.server";
 
 export const meta: MetaFunction = () => ({
   title: "Add User"

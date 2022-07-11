@@ -1,7 +1,7 @@
 import { useEffect, useContext, createContext, useCallback, useState } from "react";
-import { clientAuth } from "../../session.client";
-import type { SessionContext } from "~/shared/session/types";
-import { REFRESH_INTERVAL_SECS } from "~/shared/session/contants";
+import { clientAuth } from "../utils/session/session.client";
+import type { SessionContext } from "~/utils/session/types";
+import { REFRESH_INTERVAL_SECS } from "~/utils/session/contants";
 import { useFetcher } from "@remix-run/react";
 import { useImmer } from "use-immer";
 import type { User as FirebaseUser } from "firebase/auth";

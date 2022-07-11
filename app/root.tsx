@@ -1,9 +1,9 @@
 import type { ActionFunction, LinksFunction, LoaderFunction, MetaFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { Link, Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration, useCatch, useFetcher, useLoaderData } from "@remix-run/react";
-import type { UserSessionProperties } from "~/session.server";
-import { getSessionContext, logout, refreshUserSession } from "~/session.server";
-import { AuthProvider, useAuth } from "./shared/components/auth";
+import type { UserSessionProperties } from "./utils/session/session.server";
+import { getSessionContext, logout, refreshUserSession } from "./utils/session/session.server";
+import { AuthProvider, useAuth } from "./components/auth";
 import styles from "./tailwind.css";
 
 export const links: LinksFunction = () => {

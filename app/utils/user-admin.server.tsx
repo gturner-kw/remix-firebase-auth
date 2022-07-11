@@ -1,8 +1,9 @@
 import * as firebaseAdmin from "firebase-admin";
 import type { UserIdentifier } from "firebase-admin/lib/auth/identifier";
 import type { UserRecord } from "firebase-admin/lib/auth/user-record";
+import { HOST_URL } from "./constants.server";
 
-const serviceAccount = require("../serviceAccountKey.json");
+const serviceAccount = require("../../serviceAccountKey.json");
 if (firebaseAdmin.apps.length === 0) {
   firebaseAdmin.initializeApp({
     credential: firebaseAdmin.credential.cert(serviceAccount)
@@ -56,5 +57,5 @@ export async function addUser(user: AddUser) {
   } catch (err) {
     await auth.createUser({ email, displayName });
   }
-  return auth.generateSignInWithEmailLink(email, { url: "http://localhost:3000" });
+  return auth.generateSignInWithEmailLink(email, { url: HOST_URL });
 }

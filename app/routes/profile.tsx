@@ -1,8 +1,8 @@
 import type { ActionFunction, LoaderFunction, MetaFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
-import type { SessionContext } from "~/shared/session/types";
-import { verifySessionContext } from "~/session.server";
-import { useAuth } from "~/shared/components/auth";
+import type { SessionContext } from "~/utils/session/types";
+import { verifySessionContext } from "~/utils/session/session.server";
+import { useAuth } from "~/components/auth";
 
 export const meta: MetaFunction = () => ({
   title: "Profile"

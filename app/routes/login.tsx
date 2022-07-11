@@ -6,11 +6,11 @@ import type { AuthError } from "firebase/auth";
 import { EmailAuthProvider } from "firebase/auth";
 import { fetchSignInMethodsForEmail } from "firebase/auth";
 import { sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from "firebase/auth";
-import type { UserSessionProperties } from "~/session.server";
-import { createUserSession, getSessionContext } from "~/session.server";
+import type { UserSessionProperties } from "~/utils/session/session.server";
+import { createUserSession, getSessionContext } from "~/utils/session/session.server";
 import { createSession as createXsrfSession, getXsrfToken } from "~/xsrf.server";
-import { clientAuth } from "~/session.client";
-import type { SessionContext } from "~/shared/session/types";
+import { clientAuth } from "~/utils/session/session.client";
+import type { SessionContext } from "~/utils/session/types";
 
 export const meta: MetaFunction = () => ({
   title: "Log In",
@@ -66,9 +66,9 @@ export default function SignIn() {
 
   useEffect(() => {
     const savedEmail = window.localStorage.getItem("emailForSignIn");
-    console.log("savedEmail=", savedEmail);
     if (!!savedEmail && isSignInWithEmailLink(clientAuth, window.location.href)) {
       window.localStorage.removeItem("emailForSignIn");
+      setEmail(savedEmail);
       setLoading(true);
       signInWithEmailLink(clientAuth, savedEmail, window.location.href)
         .then(userCredential => {
@@ -103,7 +103,7 @@ export default function SignIn() {
         const idToken = await userCredential.user.getIdToken();
         fetcher.submit({ "id-token": idToken, "xsrf-token": xsrfToken }, { method: "post" });
       } else {
-        await sendSignInLinkToEmail(clientAuth, email, { url: "http://localhost:3000/login", handleCodeInApp: true });
+        await sendSignInLinkToEmail(clientAuth, email, { url: `${self.origin}/login`, handleCodeInApp: true });
         setSent(true);
         window.localStorage.setItem("emailForSignIn", email);
       }

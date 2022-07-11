@@ -3,9 +3,9 @@ import type { LoaderFunction, MetaFunction } from "@remix-run/server-runtime";
 import { initializeApp } from "firebase/app";
 import type { AuthError } from "firebase/auth";
 import { getAuth, sendSignInLinkToEmail } from "firebase/auth";
-import { verifySessionContext } from "~/session.server";
-import type { User } from "~/user-admin.server";
-import { listUsers } from "~/user-admin.server";
+import { verifySessionContext } from "~/utils/session/session.server";
+import type { User } from "~/utils/user-admin.server";
+import { listUsers } from "~/utils/user-admin.server";
 
 // Initialize Firebase
 const firebaseConfig = require("../../../firebaseConfig.json");
@@ -33,7 +33,7 @@ export default function Index() {
   const handleVerify = async (email?: string) => {
     if (email) {
       try {
-        await sendSignInLinkToEmail(auth, email, { url: "http://localhost:3000/login", handleCodeInApp: true });
+        await sendSignInLinkToEmail(auth, email, { url: `${self.origin}/login`, handleCodeInApp: true });
       } catch (err) {
         console.log((err as AuthError).message);
       }
