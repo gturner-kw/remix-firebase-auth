@@ -1,5 +1,6 @@
 import { getAuth } from "~/user-admin.server";
-import { createCookieSessionStorage, redirect } from "@remix-run/node";
+import { createCookieSessionStorage, json, redirect } from "@remix-run/node";
+import type { SessionContext, User } from "./session-types";
 
 const cookieSecret = process.env.COOKIE_SECRET;
 if (!cookieSecret) {
@@ -8,11 +9,15 @@ if (!cookieSecret) {
 
 const sessionTokenName = "__session";
 
-const { getSession, commitSession, destroySession } = createCookieSessionStorage({
+const {
+  getSession: get,
+  commitSession: commit,
+  destroySession: destroy
+} = createCookieSessionStorage({
   cookie: {
     name: sessionTokenName,
     httpOnly: true,
-    maxAge: 3600 - 60, // 1 hour minus 1 minute
+    maxAge: 3600, // 1 hour
     path: "/",
     sameSite: "lax", // allow our links from other sites to send us this cookie
     secrets: [cookieSecret],
@@ -20,27 +25,24 @@ const { getSession, commitSession, destroySession } = createCookieSessionStorage
   }
 });
 
-export { getSession, commitSession, destroySession };
-
-function getUserSession(request: Request) {
-  return getSession(request.headers.get("Cookie"));
+function getSession(request: Request) {
+  return get(request.headers.get("Cookie"));
 }
 
-export type Context = {
-  uid: string;
-  email: string;
-  emailVerified: boolean;
+export type UserSessionProperties = {
   admin: boolean;
 };
 
-export async function createUserSession(idToken: string, context: Context, redirectTo: string) {
-  // check revoked user on this call
+export async function createUserSession(idToken: string, props: UserSessionProperties | null, redirectTo?: string) {
+  // check if user was revoked on this call
   const decodedIdToken = await getAuth().verifyIdToken(idToken, true);
   if (decodedIdToken) {
-    const session = await getSession();
-    const { uid, email, email_verified: emailVerified } = decodedIdToken;
-    session.set(sessionTokenName, { ...context, uid, email, emailVerified });
-    return redirect(redirectTo, { headers: { "Set-Cookie": await commitSession(session) } });
+    const session = await get();
+    const { uid, email, email_verified: emailVerified, auth_time, iat, exp } = decodedIdToken;
+    const context = { loggedIn: auth_time, issued: iat, expires: exp, user: { uid, email, emailVerified, admin: props?.admin } };
+    session.set("context", context);
+    const init = { headers: { "Set-Cookie": await commit(session, { expires: new Date(exp * 1000) }) } };
+    return redirectTo ? redirect(redirectTo, init) : json(null, init);
   } else {
     throw new Response("Unauthorized access", {
       status: 401
@@ -49,20 +51,26 @@ export async function createUserSession(idToken: string, context: Context, redir
 }
 
 export async function logout(request: Request) {
-  const session = await getUserSession(request);
+  const session = await getSession(request);
   return redirect("/login", {
     headers: {
-      "Set-Cookie": await destroySession(session)
+      "Set-Cookie": await destroy(session)
     }
   });
 }
 
-export async function getUser(request: Request): Promise<Context | null> {
-  const session = await getUserSession(request);
-  return session.get(sessionTokenName) || null;
+export async function getSessionContext(request: Request): Promise<SessionContext | null> {
+  const session = await getSession(request);
+  const sessionContext = session.get("context") as SessionContext;
+  return sessionContext || null;
 }
 
-export async function verifyUser(request: Request): Promise<Context | null> {
+export async function getUser(request: Request): Promise<User | null> {
+  const sessionContext = await getSessionContext(request);
+  return sessionContext?.user || null;
+}
+
+export async function verifyUser(request: Request): Promise<User | null> {
   const user = await getUser(request);
   if (!user) {
     throw redirect("/login");

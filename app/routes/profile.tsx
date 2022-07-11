@@ -1,8 +1,8 @@
 import type { ActionFunction, LoaderFunction, MetaFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
-import type { Context } from "~/session.server";
+import type { SessionContext } from "~/session-types";
 import { verifyUser } from "~/session.server";
+import { useAuth } from "~/shared/components/auth";
 
 export const meta: MetaFunction = () => ({
   title: "Profile"
@@ -17,7 +17,9 @@ export const action: ActionFunction = async () => {
 };
 
 export default function Profile() {
-  const { uid, email, emailVerified, admin } = (useLoaderData() || {}) as Context;
+  const { sessionContext } = useAuth();
+  const { user } = sessionContext || ({} as SessionContext);
+  const { uid, email, emailVerified, admin } = user || {};
   return (
     <section className="text-gray-600 body-font">
       <div className="container px-5 py-24 mx-auto">
