@@ -1,6 +1,7 @@
 import type { ActionFunction, LoaderFunction, MetaFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { useFetcher, useLoaderData } from "@remix-run/react";
+import type { MouseEvent } from "react";
 import { useEffect, useCallback } from "react";
 import type { AuthError } from "firebase/auth";
 import { signInWithEmailAndPassword } from "firebase/auth";
@@ -209,6 +210,13 @@ export default function SignIn() {
     }
   };
 
+  const onGoogle = (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    setState(draft => {
+      draft.error = "This doesn't work yet - try email";
+    });
+  };
+
   const renderFormBody = () => {
     const { email, password, type, sent, loading, error } = state;
 
@@ -217,46 +225,51 @@ export default function SignIn() {
     }
     return (
       <form onSubmit={onSubmit}>
-        <div className="flex sm:w-96 w-5/6 flex-col mx-auto px-8 space-y-4 items-center">
-          <div className="relative flex-grow w-full">
-            <label htmlFor="email" className="leading-7 text-sm text-gray-600">
-              Email
-            </label>
+        <div className="flex sm:w-96 w-5/6 flex-col mx-auto px-8 space-y-6 items-center">
+          <button
+            className="w-full border border-gray-400 py-2 px-8 focus:outline-none hover:bg-gray-50 hover:border-gray-600 rounded text-lg disabled:opacity-50 disabled:cursor-not-allowed bg-[10px_center] bg-no-repeat bg-[length:24px] bg-[url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiICB4PSIwIiB5PSIwIiB2aWV3Qm94PSIwIDAgNjQgNjQiIHhtbDpzcGFjZT0icHJlc2VydmUiPjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI%2BLnN0MHtjbGlwLXBhdGg6dXJsKCNTVkdJRF8yXyk7ZmlsbDojRkJCQzA1O30uc3Qxe2NsaXAtcGF0aDp1cmwoI1NWR0lEXzRfKTtmaWxsOiNFQTQzMzU7fS5zdDJ7Y2xpcC1wYXRoOnVybCgjU1ZHSURfNl8pO2ZpbGw6IzM0QTg1Mzt9LnN0M3tjbGlwLXBhdGg6dXJsKCNTVkdJRF84Xyk7ZmlsbDojNDI4NUY0O308L3N0eWxlPjxkZWZzPjxwYXRoIGlkPSJTVkdJRF8xXyIgZD0iTTU5LjMgMjYuN0g1NiA0NS4xIDMyVjM4aDE1LjdjLTEuNSA3LjItNy42IDExLjMtMTUuNyAxMS4zIC05LjYgMC0xNy4zLTcuNy0xNy4zLTE3LjNTMjIuNCAxNC43IDMyIDE0LjdjNC4xIDAgNy45IDEuNSAxMC44IDMuOWw4LjUtOC41QzQ2LjEgNS41IDM5LjUgMi43IDMyIDIuNyAxNS43IDIuNyAyLjcgMTUuNyAyLjcgMzJTMTUuNyA2MS4zIDMyIDYxLjNjMTQuNyAwIDI4LTEwLjcgMjgtMjkuM0M2MCAzMC4zIDU5LjcgMjguNCA1OS4zIDI2Ljd6Ii8%2BPC9kZWZzPjxjbGlwUGF0aCBpZD0iU1ZHSURfMl8iPjx1c2UgeGxpbms6aHJlZj0iI1NWR0lEXzFfIi8%2BPC9jbGlwUGF0aD48cG9seWdvbiBjbGFzcz0ic3QwIiBwb2ludHM9IjAgNDkuMyAwIDE0LjcgMjIuNyAzMiAiLz48ZGVmcz48cGF0aCBpZD0iU1ZHSURfM18iIGQ9Ik01OS4zIDI2LjdINTYgNDUuMSAzMlYzOGgxNS43Yy0xLjUgNy4yLTcuNiAxMS4zLTE1LjcgMTEuMyAtOS42IDAtMTcuMy03LjctMTcuMy0xNy4zUzIyLjQgMTQuNyAzMiAxNC43YzQuMSAwIDcuOSAxLjUgMTAuOCAzLjlsOC41LTguNUM0Ni4xIDUuNSAzOS41IDIuNyAzMiAyLjcgMTUuNyAyLjcgMi43IDE1LjcgMi43IDMyUzE1LjcgNjEuMyAzMiA2MS4zYzE0LjcgMCAyOC0xMC43IDI4LTI5LjNDNjAgMzAuMyA1OS43IDI4LjQgNTkuMyAyNi43eiIvPjwvZGVmcz48Y2xpcFBhdGggaWQ9IlNWR0lEXzRfIj48dXNlIHhsaW5rOmhyZWY9IiNTVkdJRF8zXyIvPjwvY2xpcFBhdGg%2BPHBvbHlnb24gY2xhc3M9InN0MSIgcG9pbnRzPSIwIDE0LjcgMjIuNyAzMiAzMiAyMy45IDY0IDE4LjcgNjQgMCAwIDAgIi8%2BPGRlZnM%2BPHBhdGggaWQ9IlNWR0lEXzVfIiBkPSJNNTkuMyAyNi43SDU2IDQ1LjEgMzJWMzhoMTUuN2MtMS41IDcuMi03LjYgMTEuMy0xNS43IDExLjMgLTkuNiAwLTE3LjMtNy43LTE3LjMtMTcuM1MyMi40IDE0LjcgMzIgMTQuN2M0LjEgMCA3LjkgMS41IDEwLjggMy45bDguNS04LjVDNDYuMSA1LjUgMzkuNSAyLjcgMzIgMi43IDE1LjcgMi43IDIuNyAxNS43IDIuNyAzMlMxNS43IDYxLjMgMzIgNjEuM2MxNC43IDAgMjgtMTAuNyAyOC0yOS4zQzYwIDMwLjMgNTkuNyAyOC40IDU5LjMgMjYuN3oiLz48L2RlZnM%2BPGNsaXBQYXRoIGlkPSJTVkdJRF82XyI%2BPHVzZSB4bGluazpocmVmPSIjU1ZHSURfNV8iLz48L2NsaXBQYXRoPjxwb2x5Z29uIGNsYXNzPSJzdDIiIHBvaW50cz0iMCA0OS4zIDQwIDE4LjcgNTAuNSAyMCA2NCAwIDY0IDY0IDAgNjQgIi8%2BPGRlZnM%2BPHBhdGggaWQ9IlNWR0lEXzdfIiBkPSJNNTkuMyAyNi43SDU2IDQ1LjEgMzJWMzhoMTUuN2MtMS41IDcuMi03LjYgMTEuMy0xNS43IDExLjMgLTkuNiAwLTE3LjMtNy43LTE3LjMtMTcuM1MyMi40IDE0LjcgMzIgMTQuN2M0LjEgMCA3LjkgMS41IDEwLjggMy45bDguNS04LjVDNDYuMSA1LjUgMzkuNSAyLjcgMzIgMi43IDE1LjcgMi43IDIuNyAxNS43IDIuNyAzMlMxNS43IDYxLjMgMzIgNjEuM2MxNC43IDAgMjgtMTAuNyAyOC0yOS4zQzYwIDMwLjMgNTkuNyAyOC40IDU5LjMgMjYuN3oiLz48L2RlZnM%2BPGNsaXBQYXRoIGlkPSJTVkdJRF84XyI%2BPHVzZSB4bGluazpocmVmPSIjU1ZHSURfN18iLz48L2NsaXBQYXRoPjxwb2x5Z29uIGNsYXNzPSJzdDMiIHBvaW50cz0iNjQgNjQgMjIuNyAzMiAxNy4zIDI4IDY0IDE0LjcgIi8%2BPC9zdmc%2BCg%3D%3D)]"
+            disabled={loading}
+            onClick={onGoogle}>
+            Log In using Google
+          </button>
+          <div className="">Or login with email</div>
+          <input
+            type="text"
+            id="email"
+            name="email"
+            placeholder="Your Email"
+            className="w-full bg-gray-100 bg-opacity-50 rounded border border-gray-300 focus:border-indigo-500 focus:bg-transparent focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out"
+            value={email}
+            onChange={e =>
+              setState(draft => {
+                draft.email = e.target.value;
+              })
+            }
+            disabled={loading}
+          />
+          {type === "password" && (
             <input
-              type="text"
-              id="email"
-              name="email"
+              type="password"
+              id="password"
+              name="password"
+              placeholder="Password"
               className="w-full bg-gray-100 bg-opacity-50 rounded border border-gray-300 focus:border-indigo-500 focus:bg-transparent focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out"
-              value={email}
+              value={password}
               onChange={e =>
                 setState(draft => {
-                  draft.email = e.target.value;
+                  draft.password = e.target.value;
                 })
               }
-              disabled={!!loading}
+              disabled={loading}
             />
-          </div>
-          {type === "password" && (
-            <div className="relative flex-grow w-full">
-              <label htmlFor="password" className="leading-7 text-sm text-gray-600">
-                Password
-              </label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                className="w-full bg-gray-100 bg-opacity-50 rounded border border-gray-300 focus:border-indigo-500 focus:bg-transparent focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out"
-                value={password}
-                onChange={e =>
-                  setState(draft => {
-                    draft.password = e.target.value;
-                  })
-                }
-                disabled={!!loading}
-              />
-            </div>
           )}
-          <button className="btn w-2/3" disabled={!!loading}>
+          <div className="w-full !mt-3">
+            <input type="checkbox" id="remember-device" name="rememberDevice" />
+            <label className="ml-2" htmlFor="remember-device">
+              Remember this device
+            </label>
+          </div>
+          <button className="btn w-full !mt-12" disabled={loading}>
             {loading ? "Logging in ..." : "Login"}
           </button>
           {error && <p>{error}</p>}
@@ -269,7 +282,7 @@ export default function SignIn() {
     <section className="text-gray-600 body-font">
       <div className="container px-5 py-24 mx-auto">
         <div className="flex flex-col text-center w-full mb-12">
-          <h1 className="sm:text-3xl text-2xl font-medium text-gray-900">Login</h1>
+          <h1 className="sm:text-3xl text-2xl font-medium text-gray-900">Log In</h1>
         </div>
         {renderFormBody()}
       </div>
