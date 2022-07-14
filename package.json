@@ -5,6 +5,7 @@
     "build": "run-s build:*",
     "build:css": "npm run generate:css -- --minify",
     "build:remix": "remix build",
+    "deploy": "fly deploy --remote-only",
     "dev": "run-p dev:*",
     "dev:css": "npm run generate:css -- --watch",
     "dev:remix": "remix dev",
